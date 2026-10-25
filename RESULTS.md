@@ -9,10 +9,11 @@ clear sky and monsoon rain.
    rain, scintillation and pointing jitter, then the link budget gives SNR.
 2. **Predict** with two models:
    - Baseline: free-space loss plus one fixed average atmospheric loss
-     (4.26 dB, learned from training data).
+     (4.04 dB, learned from training data).
    - Hybrid: baseline plus a LightGBM-learned correction.
 3. **Trust**: 90% prediction band from quantile regression plus
-   split-conformal calibration (adjustment of 0.15 dB).
+   split-conformal calibration, computed separately for each scenario
+   and elevation group.
 
 ## Link budget assumptions
 | Parameter | Value |
@@ -41,37 +42,42 @@ Rain lowers the average SNR by about 10 dB and widens the spread from
 heavy rain bursts in the simulated rain-rate series.
 
 ## Validation
-- Split by whole trajectory (never by row): 70% train, 10% calibration,
+- Split by whole trajectory (never by row): 60% train, 20% calibration,
   20% test.
-- Elevations below 30 degrees are never seen in training or calibration
-  and are used as an unseen test band.
+- The **model** is trained only on elevations of 30 degrees and above, so
+  the band below 30 degrees is unseen by the model.
+- The **calibration** set includes all elevations (different trajectories
+  from the test set), and the conformal adjustment is computed separately
+  for each scenario and elevation group.
 
 ## Results (held-out trajectories)
 
 ### All held-out trajectories
 | Scenario | Rows | Baseline MAE (dB) | Hybrid MAE (dB) | MAE reduction | 90% band coverage | Avg band width (dB) |
 |---|---|---|---|---|---|---|
-| clear_sky | 2,220 | 3.67 | 0.36 | 90% | 93.8% | 1.65 |
-| monsoon_rain | 1,380 | 5.52 | 1.54 | 72% | 75.9% | 4.25 |
+| clear_sky | 2,220 | 3.45 | 0.35 | 90% | 91.2% | 1.63 |
+| monsoon_rain | 1,380 | 5.61 | 1.58 | 72% | 87.6% | 6.30 |
 
 ### Unseen low-elevation band (below 30 degrees)
 | Scenario | Rows | Baseline MAE (dB) | Hybrid MAE (dB) | MAE reduction | 90% band coverage | Avg band width (dB) |
 |---|---|---|---|---|---|---|
-| clear_sky | 757 | 3.52 | 0.43 | 88% | 93.4% | 1.90 |
-| monsoon_rain | 515 | 8.32 | 2.53 | 70% | 58.1% | 5.33 |
+| clear_sky | 757 | 3.30 | 0.41 | 88% | 92.1% | 2.08 |
+| monsoon_rain | 515 | 8.48 | 2.61 | 69% | 85.6% | 10.46 |
 
 ### What these numbers say
 - **MAE target met:** the hybrid model beats the analytical baseline in
   both scenarios, on all held-out trajectories and in the unseen band.
-- **Coverage target met only in clear sky:** clear_sky coverage is 93.8%
-  (93.4% in the unseen band), above the 90% target.
-- **Coverage target missed in monsoon rain:** coverage is 75.9% overall
-  and 58.1% in the unseen low-elevation band. Likely causes: rain loss is
-  heavy-tailed and grows sharply at low elevation, and the calibration
-  set contains no elevations below 30 degrees, so the exchangeability
-  assumption behind conformal prediction does not hold there.
-- **Next step:** include some low-elevation trajectories in calibration,
-  or use elevation-dependent (conditional) conformal scores.
+- **Coverage target met in clear sky:** 91.2% overall and 92.1% in the
+  unseen band.
+- **Coverage target nearly met in monsoon rain:** 87.6% overall and 85.6%
+  in the unseen band, just below 90%. The bands are wider in rain
+  (6.30 dB, and 10.46 dB at low elevation) because rain loss is
+  heavy-tailed and hard to predict.
+- **Earlier version:** using one shared adjustment and a calibration set
+  without low elevations gave monsoon coverage of 75.9% (58.1% in the
+  unseen band). Grouped calibration fixed most of that gap.
+- **Next step:** more trajectories per scenario, or a finer elevation
+  grouping, to close the last 2 to 4 points.
 
 ## How to rerun
 1. Open `kaushik_hybrid_model.ipynb` in Google Colab (File > Upload notebook).
@@ -89,7 +95,7 @@ heavy rain bursts in the simulated rain-rate series.
 - Synthetic, model-based data only. No real-network validation is claimed.
 - Rain, gas and cloud losses use simplified ITU-R-style formulas,
   not the full ITU-Rpy implementation.
-- Monsoon-rain interval coverage is below the 90% target (see Results).
+- Monsoon-rain interval coverage is slightly below the 90% target.
 - Sensitivity analysis (tornado and Sobol) is done separately by Srinidhi.
 
 ## Team
