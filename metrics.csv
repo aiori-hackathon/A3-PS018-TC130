@@ -1,5 +1,5 @@
 test_set,scenario,rows,MAE_baseline_dB,MAE_hybrid_dB,coverage_90,avg_band_width_dB
-All held-out trajectories,clear_sky,2220,3.67,0.36,0.938,1.65
-All held-out trajectories,monsoon_rain,1380,5.52,1.54,0.759,4.25
-Unseen low elevation (<30 deg),clear_sky,757,3.52,0.43,0.934,1.9
-Unseen low elevation (<30 deg),monsoon_rain,515,8.32,2.53,0.581,5.33
+All held-out trajectories,clear_sky,2220,3.45,0.35,0.912,1.63
+All held-out trajectories,monsoon_rain,1380,5.61,1.58,0.876,6.3
+Unseen low elevation (<30 deg),clear_sky,757,3.3,0.41,0.921,2.08
+Unseen low elevation (<30 deg),monsoon_rain,515,8.48,2.61,0.856,10.46
